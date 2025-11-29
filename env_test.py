@@ -1,11 +1,12 @@
 import gymnasium as gym
 import numpy as np
+import pandas as pd
 from typing import Optional
 import pickle
 
 class TestStockTradingEnv(gym.Env):
 
-    def __init__(self, num_stocks=5, lookback_period=60, dataset_path='dataset.pkl', start_date='2005-03-05'):
+    def __init__(self, num_stocks=5, lookback_period=60, dataset_path='dataset.pkl'):
         # load dataset from pickle file
         self.dataset_path = dataset_path
         self.data = self._load_dataset()
@@ -16,8 +17,10 @@ class TestStockTradingEnv(gym.Env):
         # number of stocks to trade
         self.num_stocks = num_stocks
 
-        self.start_date = start_date
-        self.current_date = start_date
+        # set start date for the environment
+        day = pd.Timedelta(days=1)
+        self.start_date = self.data.index[0] + day * lookback_period
+        self.current_date = self.start_date
 
         self.lookback_period = lookback_period
 
@@ -59,7 +62,9 @@ class TestStockTradingEnv(gym.Env):
         self._portfolio_allocation = np.array([1/self.num_stocks] * self.num_stocks)
 
         # reset log returns
-        self.data_lrs = self._get_stock_lrs(current_date=self.start_date)
+        self.data_lrs = self._get_stock_lrs()
+
+        self.current_date = self.start_date
 
         # return initial observation
         return self._get_obs(), {}
@@ -78,45 +83,46 @@ class TestStockTradingEnv(gym.Env):
         # update date
         self.increment_date()
 
-        # check if episode is done (for simplicity, we can define a fixed number of steps)
-        done = False  # implement your own logic for episode termination
+        # check if episode is done
+        done = self.current_date is None 
 
         # return observation, reward, done, and info
         return self._get_obs(), reward, done, {}
     
 
     def _load_dataset(self):
+        print("hello", self.dataset_path)
         # load dataset from pickle file
         with open(self.dataset_path, 'rb') as f:
             data = pickle.load(f)
         return data
 
 
-    def _get_stock_lrs(self, current_date='2005-03-05'):
+    def _get_stock_lrs(self):
         # get stock prices for the lookback period
-        start_date = self.subtract_dates(current_date, self.lookback_period)
+        start_date = self.subtract_dates(self.current_date, self.lookback_period)
 
-        print("hello", start_date, current_date)
+        print("hello", start_date, self.current_date)
         # print(self.data_lrs[start_date:current_date])
-        return self.data_lrs[start_date:current_date]
+        return self.data_lrs[start_date:self.current_date]
     
 
-    def _get_stock_opens(self, current_date='2005-03-05'):
+    def _get_stock_opens(self):
         # get stock prices for the lookback period
-        start_date = self.subtract_dates(current_date, self.lookback_period)
+        start_date = self.subtract_dates(self.current_date, self.lookback_period)
 
-        print("hello", start_date, current_date)
+        print("hello", start_date, self.current_date)
         # print(self.data_open[start_date:current_date])
-        return self.data_open[start_date:current_date]
+        return self.data_open[start_date:self.current_date]
     
 
-    def _calculate_reward(self, new_allocation, current_date='2005-03-05'):
+    def _calculate_reward(self, new_allocation):
         # calculate portfolio return based on new allocation and stock opening prices
         # portfolio return for today
-        today_open = self.data_open[current_date:current_date]
+        today_open = self.data_open[self.current_date:self.current_date]
         today_open = np.array(today_open)[0]
 
-        yesterday = self.subtract_dates(current_date, 1)
+        yesterday = self.subtract_dates(self.current_date, 1)
         yesterday_open = self.data_open[yesterday:yesterday]
         yesterday_open = np.array(yesterday_open)[0]
 
@@ -126,30 +132,28 @@ class TestStockTradingEnv(gym.Env):
         return reward
     
 
-    def subtract_dates(self, date_str, days):
-        year, month, day = [int(n) for n in date_str.split('-')]
-        day -= days
+    def subtract_dates(self, date, num_days):
+        day = pd.Timedelta(days=1)
 
-        while day < 1:
-            month -= 1
-            if month < 1:
-                year -= 1
-                month = 12
+        return date - num_days * day
 
-            if month in [1, 3, 5, 7, 8, 10, 12]:
-                days_in_month = 31
-            elif month == 2:
-                # leap year check
-                if year % 4 == 0:
-                    days_in_month = 29
-                else:
-                    days_in_month = 28
+
+    def increment_date(self):
+        day = pd.Timedelta(days=1)
+
+        self.current_date += day
+
+        # Ensure the new date exists in the dataset
+        if self.current_date not in self.data_open.index:
+            # check if this is an omitted date
+            if self.current_date < self.data_open.index[-1]:
+                # keep incrementing until a valid date is found
+                while self.current_date not in self.data_open.index:
+                    self.current_date += day
+
+            # we have finished the dataset
             else:
-                days_in_month = 30
-
-            day += days_in_month
-
-        return f"{year:04d}-{month:02d}-{day:02d}"
+                self.current_date = None
 
 
     def increment_date(self):
