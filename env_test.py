@@ -19,12 +19,9 @@ class TestStockTradingEnv(gym.Env):
         self.num_stocks = num_stocks
 
         # set start date for the environment
-        day = pd.Timedelta(days=1)
-        self.start_date = self.data.index[0] + day * lookback_period
+        self.current_day_idx = lookback_period
+        self.start_date = self.data.index[self.current_day_idx]
         
-        self.current_date = self.start_date
-        self.check_omitted_dates()
-
         self.lookback_period = lookback_period
 
         # array representing each stock's fraction of the total portfolio
@@ -51,9 +48,9 @@ class TestStockTradingEnv(gym.Env):
         # return the current observation
         return {
             'portfolio_allocation': self._portfolio_allocation,
-            'stock_lrs': [] if self.current_date is None else self._get_stock_lrs(),
-            'stock_opens': [] if self.current_date is None else self._get_stock_opens(),
-            'current_date': self.current_date
+            'stock_lrs': [] if self.current_day_idx >= len(self.data) else self._get_stock_lrs(),
+            'stock_opens': [] if self.current_day_idx >= len(self.data) else self._get_stock_opens(),
+            'current_date': None if self.current_day_idx >= len(self.data) else self.data.index[self.current_day_idx]
             # 'volatility_metrics': self._get_volatility_metrics()
         }
     
@@ -64,11 +61,12 @@ class TestStockTradingEnv(gym.Env):
         # reset portfolio allocation to equal distribution
         self._portfolio_allocation = np.array([1/self.num_companies] * self.num_companies)
 
-        # reset log returns
-        self.data_lrs = self._get_stock_lrs()
+        # reset day
+        self.current_day_idx = self.lookback_period
 
-        self.current_date = self.start_date
-        self.check_omitted_dates()
+        # reset data
+        self.data_lrs = self._get_stock_lrs()
+        self.data_open = self._get_stock_opens()
 
         # return initial observation
         return self._get_obs(), {}
@@ -85,10 +83,10 @@ class TestStockTradingEnv(gym.Env):
         self._portfolio_allocation = action
 
         # update date
-        self.increment_date()
+        self.current_day_idx += 1
 
         # check if episode is done
-        done = self.current_date is None 
+        done = self.current_day_idx >= len(self.data)
 
         # return observation, reward, done, and info
         return self._get_obs(), reward, done, {}
@@ -103,71 +101,37 @@ class TestStockTradingEnv(gym.Env):
 
     def _get_stock_lrs(self):
         # get stock prices for the lookback period
-        start_date = self.subtract_dates(self.current_date, self.lookback_period)
+        start_date = self.data.index[self.current_day_idx - self.lookback_period]
+        end_date = self.data.index[self.current_day_idx - 1]
 
-        return self.data_lrs[start_date:self.current_date]
+        return self.data_lrs[start_date:end_date]
     
 
     def _get_stock_opens(self):
         # get stock prices for the lookback period
-        start_date = self.subtract_dates(self.current_date, self.lookback_period)
+        start_date = self.data.index[self.current_day_idx - self.lookback_period]
+        end_date = self.data.index[self.current_day_idx - 1]
 
-        return self.data_open[start_date:self.current_date]
+        return self.data_open[start_date:end_date]
     
 
     def _calculate_reward(self, new_allocation):
         # calculate portfolio return based on new allocation and stock opening prices
         # portfolio return for today
-        today_open = self.data_open[self.current_date:self.current_date]
+        today = self.data.index[self.current_day_idx]
+        today_open = self.data['Open'][today:today]
         today_open = np.array(today_open)[0]
 
-        yesterday = self.subtract_dates(self.current_date, 1)
-        yesterday_open = self.data_open[yesterday:yesterday]
+        yesterday = self.data.index[self.current_day_idx - 1]
+        yesterday_open = self.data['Open'][yesterday:yesterday]
         yesterday_open = np.array(yesterday_open)[0]
 
         old_value = np.dot(self._portfolio_allocation * self.num_stocks, yesterday_open)
         new_value = np.dot(new_allocation * self.num_stocks, today_open)
 
-        if self.current_date.day % 10 == 0:
-            print(f"Date: {self.current_date}, Old Value: {old_value}, New Value: {new_value}, Reward: {new_value - old_value}")
+        if today.day % 10 == 0:
+            print(f"Date: {today}, Old Value: {old_value}, New Value: {new_value}, Reward: {new_value - old_value}")
+            # print(len(self.data_lrs), len(self.data_open))
 
         reward = new_value - old_value
         return reward
-    
-
-    def subtract_dates(self, date, num_days):
-        day = pd.Timedelta(days=1)
-
-        newdate = date - num_days * day
-
-        # check if this is an omitted date
-        while newdate not in self.data_open.index or len(self.data_open[newdate:newdate]) == 0:
-            newdate -= day
-
-            # check if we have finished the dataset
-            if newdate < self.data_open.index[0]:
-                newdate += day
-                return  
-
-        return newdate
-
-
-    def increment_date(self):
-        day = pd.Timedelta(days=1)
-
-        self.current_date += day
-
-        self.check_omitted_dates()
-
-    
-    def check_omitted_dates(self):
-        day = pd.Timedelta(days=1)
-
-        # check if this is an omitted date
-        while self.current_date not in self.data_open.index or len(self.data_open[self.current_date:self.current_date]) == 0:
-            self.current_date += day
-
-            # check if we have finished the dataset
-            if self.current_date > self.data_open.index[-1]:
-                self.current_date = None
-                return  
