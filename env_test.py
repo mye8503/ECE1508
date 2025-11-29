@@ -125,9 +125,9 @@ class TestStockTradingEnv(gym.Env):
         yesterday = self.data.index[self.current_day_idx - 1]
         yesterday_open = self.data['Open'][yesterday:yesterday]
         yesterday_open = np.array(yesterday_open)[0]
-
-        old_value = np.dot(self._portfolio_allocation * self.num_stocks, yesterday_open)
-        new_value = np.dot(new_allocation * self.num_stocks, today_open)
+        
+        old_value = np.dot(np.rint(self._portfolio_allocation * self.num_stocks), yesterday_open)
+        new_value = np.dot(np.rint(new_allocation * self.num_stocks), today_open)
 
         if today.day % 10 == 0:
             print(f"Date: {today}, Old Value: {old_value}, New Value: {new_value}, Reward: {new_value - old_value}")
