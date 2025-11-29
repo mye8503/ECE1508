@@ -17,6 +17,8 @@ class TestStockTradingEnv(gym.Env):
         self.num_stocks = num_stocks
 
         self.start_date = start_date
+        self.current_date = start_date
+
         self.lookback_period = lookback_period
 
         # array representing each stock's fraction of the total portfolio
@@ -30,6 +32,7 @@ class TestStockTradingEnv(gym.Env):
         self.observation_space = gym.spaces.Dict({
             'portfolio_allocation': gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32),
             'stock_lrs': gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.num_stocks, lookback_period), dtype=np.float32),
+            'stock_opens': gym.spaces.Box(low=0, high=np.inf, shape=(self.num_stocks, lookback_period), dtype=np.float32),
             # 'volatility_metrics': gym.spaces.Box(low=0, high=np.inf, shape=(self.num_stocks, lookback_period), dtype=np.float32)
         })
 
@@ -43,6 +46,8 @@ class TestStockTradingEnv(gym.Env):
         return {
             'portfolio_allocation': self._portfolio_allocation,
             'stock_lrs': self._get_stock_lrs(),
+            'stock_opens': self._get_stock_opens(),
+            'current_date': self.current_date
             # 'volatility_metrics': self._get_volatility_metrics()
         }
     
@@ -70,6 +75,9 @@ class TestStockTradingEnv(gym.Env):
         # update portfolio allocation
         self._portfolio_allocation = action
 
+        # update date
+        self.increment_date()
+
         # check if episode is done (for simplicity, we can define a fixed number of steps)
         done = False  # implement your own logic for episode termination
 
@@ -89,8 +97,17 @@ class TestStockTradingEnv(gym.Env):
         start_date = self.subtract_dates(current_date, self.lookback_period)
 
         print("hello", start_date, current_date)
-        print(self.data_lrs[start_date:current_date])
+        # print(self.data_lrs[start_date:current_date])
         return self.data_lrs[start_date:current_date]
+    
+
+    def _get_stock_opens(self, current_date='2005-03-05'):
+        # get stock prices for the lookback period
+        start_date = self.subtract_dates(current_date, self.lookback_period)
+
+        print("hello", start_date, current_date)
+        # print(self.data_open[start_date:current_date])
+        return self.data_open[start_date:current_date]
     
 
     def _calculate_reward(self, new_allocation, current_date='2005-03-05'):
@@ -133,6 +150,32 @@ class TestStockTradingEnv(gym.Env):
             day += days_in_month
 
         return f"{year:04d}-{month:02d}-{day:02d}"
+
+
+    def increment_date(self):
+        year, month, day = [int(n) for n in self.current_date.split('-')]
+        day += 1
+
+        if month in [1, 3, 5, 7, 8, 10, 12] and day > 31:
+            day = 1
+            month += 1
+            
+            if month > 12:
+                month = 1
+                year += 1
+
+        elif month == 2:
+            # leap year check
+            if (year % 4 == 0 and day > 29) or day > 28:
+                day = 1
+                month += 1
+
+        else:
+            day = 1
+            month += 1
+
+
+        self.current_date = f"{year:04d}-{month:02d}-{day:02d}"
 
         
         
