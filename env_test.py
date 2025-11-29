@@ -143,44 +143,12 @@ class TestStockTradingEnv(gym.Env):
 
         self.current_date += day
 
-        # Ensure the new date exists in the dataset
-        if self.current_date not in self.data_open.index:
-            # check if this is an omitted date
-            if self.current_date < self.data_open.index[-1]:
-                # keep incrementing until a valid date is found
-                while self.current_date not in self.data_open.index:
-                    self.current_date += day
+        # check if this is an omitted date
+        while self.current_date not in self.data_open.index:
+            self.current_date += day
 
-            # we have finished the dataset
-            else:
+            # check if we have finished the dataset
+            if self.current_date > self.data_open.index[-1]:
                 self.current_date = None
-
-
-    def increment_date(self):
-        year, month, day = [int(n) for n in self.current_date.split('-')]
-        day += 1
-
-        if month in [1, 3, 5, 7, 8, 10, 12] and day > 31:
-            day = 1
-            month += 1
-            
-            if month > 12:
-                month = 1
-                year += 1
-
-        elif month == 2:
-            # leap year check
-            if (year % 4 == 0 and day > 29) or day > 28:
-                day = 1
-                month += 1
-
-        else:
-            day = 1
-            month += 1
-
-
-        self.current_date = f"{year:04d}-{month:02d}-{day:02d}"
-
-        
-        
+                return  
 
