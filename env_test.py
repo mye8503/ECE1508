@@ -35,6 +35,7 @@ class TestStockTradingEnv(gym.Env):
         self.observation_space = gym.spaces.Dict({
             'portfolio_allocation': gym.spaces.Box(low=0, high=1, shape=(self.num_stocks,), dtype=np.float32),
             'stock_lrs': gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.num_stocks, lookback_period), dtype=np.float32),
+            'stock_opens': gym.spaces.Box(low=0, high=np.inf, shape=(self.num_stocks, lookback_period), dtype=np.float32),
             # 'volatility_metrics': gym.spaces.Box(low=0, high=np.inf, shape=(self.num_stocks, lookback_period), dtype=np.float32)
         })
 
@@ -48,6 +49,8 @@ class TestStockTradingEnv(gym.Env):
         return {
             'portfolio_allocation': self._portfolio_allocation,
             'stock_lrs': self._get_stock_lrs(),
+            'stock_opens': self._get_stock_opens(),
+            'current_date': self.current_date
             # 'volatility_metrics': self._get_volatility_metrics()
         }
     
@@ -140,18 +143,12 @@ class TestStockTradingEnv(gym.Env):
 
         self.current_date += day
 
-        # Ensure the new date exists in the dataset
-        if self.current_date not in self.data_open.index:
-            # check if this is an omitted date
-            if self.current_date < self.data_open.index[-1]:
-                # keep incrementing until a valid date is found
-                while self.current_date not in self.data_open.index:
-                    self.current_date += day
+        # check if this is an omitted date
+        while self.current_date not in self.data_open.index:
+            self.current_date += day
 
-            # we have finished the dataset
-            else:
+            # check if we have finished the dataset
+            if self.current_date > self.data_open.index[-1]:
                 self.current_date = None
-
-        
-        
+                return  
 
