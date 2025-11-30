@@ -4,9 +4,9 @@ import pandas as pd
 from typing import Optional
 import pickle
 
-class TestStockTradingEnv(gym.Env):
+class StockTradingEnv(gym.Env):
 
-    def __init__(self, investment=100000, num_companies=5, num_stocks=1000, 
+    def __init__(self, investment=100000, num_companies=5, 
                  lookback_period=60, eta=1/252, dataset_path='dataset.pkl'):
         # load dataset from pickle file
         self.dataset_path = dataset_path
@@ -18,10 +18,9 @@ class TestStockTradingEnv(gym.Env):
 
         # number of stocks to trade
         self.num_companies = num_companies
-        self.num_stocks = num_stocks
 
         # set start date for the environment
-        self.current_day_idx = lookback_period
+        self.current_day_idx = lookback_period - 1 # account for indexing starting from 0
         self.start_date = self.data.index[self.current_day_idx]
         
         self.portfolio_val = investment
@@ -51,7 +50,6 @@ class TestStockTradingEnv(gym.Env):
         data = {
             'portfolio_allocation': self._portfolio_allocation,
             'stock_lrs': [] if self.current_day_idx >= len(self.data) else self._get_stock_lrs(),
-            # 'current_date': None if self.current_day_idx >= len(self.data) else self.data.index[self.current_day_idx]
             # 'volatility_metrics': self._get_volatility_metrics()
         }
 
@@ -73,11 +71,8 @@ class TestStockTradingEnv(gym.Env):
         self._portfolio_allocation = np.array([1/self.num_companies] * self.num_companies)
 
         # reset day
-        self.current_day_idx = self.lookback_period
+        self.current_day_idx = self.lookback_period - 1
 
-        # reset data
-        # self.data_lrs = self._get_stock_lrs()
-        # self.data_open = self._get_stock_opens()
 
         # return initial observation
         return self._get_obs(), {}
@@ -108,12 +103,6 @@ class TestStockTradingEnv(gym.Env):
         with open(self.dataset_path, 'rb') as f:
             data = pickle.load(f)
 
-        self.company_name = data.columns.levels[1]
-
-        # add the daily return of each asset to dataset (will be used in reward)
-        for company in self.company_name:
-            data["Return", company] = data["Close"][company].pct_change()
-
         return data
 
 
@@ -124,13 +113,6 @@ class TestStockTradingEnv(gym.Env):
 
         return self.data_lrs[start_date:end_date]
     
-
-    # def _get_stock_opens(self):
-    #     # get stock prices for the lookback period
-    #     start_date = self.data.index[self.current_day_idx - self.lookback_period]
-    #     end_date = self.data.index[self.current_day_idx - 1]
-
-    #     return self.data_open[start_date:end_date]
     
     def _calculate_shares(self, weights, date):
         asset_budget = self.portfolio_val * weights # the amount of money allocated to each asset
@@ -145,8 +127,8 @@ class TestStockTradingEnv(gym.Env):
     def _calculate_diff_sharpe_ratio(self, new_weights):
         # calculating the reward, which is the differential sharpe ratio
         # we are assuming that at the end of the trading day, we are able to reallocate our portfolio
-        today = self.data.index(self.current_day_idx)
-        yesterday = self.data.index(self.current_day_idx-1)
+        today = self.data.index[self.current_day_idx]
+        yesterday = self.data.index[self.current_day_idx-1]
 
         shares = self._calculate_shares(new_weights, yesterday) 
         new_prices = self.data['Close'][today:today].values.flatten()
@@ -157,9 +139,9 @@ class TestStockTradingEnv(gym.Env):
         portfolio_return = (new_portfolio_val-old_portfolio_val)/new_portfolio_val
 
         delta_A = portfolio_return - self.A
-        delta_B = portfolio_return^2 - self.B
+        delta_B = portfolio_return**2 - self.B
 
-        reward = ((self.B*delta_A)-1/2*(self.A*delta_B))/((self.B-self.A^2)^(3/2))
+        reward = ((self.B*delta_A)-1/2*(self.A*delta_B))/((self.B-self.A**2)**(3/2))
 
         self.A += self.eta * delta_A
         self.B += self.eta * delta_B
@@ -167,27 +149,3 @@ class TestStockTradingEnv(gym.Env):
         self.portfolio_val = new_portfolio_val
 
         return reward
-
-
-    
-    
-    # def _calculate_reward(self, new_allocation):
-    #     # calculate portfolio return based on new allocation and stock opening prices
-    #     # portfolio return for today
-    #     today = self.data.index[self.current_day_idx]
-    #     today_open = self.data['Open'][today:today]
-    #     today_open = np.array(today_open)[0]
-
-    #     yesterday = self.data.index[self.current_day_idx - 1]
-    #     yesterday_open = self.data['Open'][yesterday:yesterday]
-    #     yesterday_open = np.array(yesterday_open)[0]
-        
-    #     old_value = np.dot(np.rint(self._portfolio_allocation * self.num_stocks), yesterday_open)
-    #     new_value = np.dot(np.rint(new_allocation * self.num_stocks), today_open)
-
-    #     if today.day % 10 == 0:
-    #         print(f"Date: {today}, Old Value: {old_value}, New Value: {new_value}, Reward: {new_value - old_value}")
-    #         # print(len(self.data_lrs), len(self.data_open))
-
-    #     reward = new_value - old_value
-    #     return reward
