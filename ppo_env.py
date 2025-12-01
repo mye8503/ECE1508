@@ -6,8 +6,8 @@ import pickle
 
 class StockTradingEnv(gym.Env):
 
-    def __init__(self, investment=100000, num_companies=5, 
-                 lookback_period=60, eta=1/252, dataset_path='dataset.pkl'):
+    def __init__(self, investment=100000, lookback_period=60, 
+                 eta=1/252, dataset_path='dataset.pkl'):
         # load dataset from pickle file
         self.dataset_path = dataset_path
         self.data = self._load_dataset()
@@ -16,13 +16,14 @@ class StockTradingEnv(gym.Env):
         self.data_lrs = self.data['Log return']
         # self.data_open = self.data['Open']
 
-        # number of stocks to trade
-        self.num_companies = num_companies
+        # number of assets in the portfolio
+        self.num_companies = len(self.data.columns.levels[1])
 
         # set start date for the environment
         self.current_day_idx = lookback_period - 1 # account for indexing starting from 0
         self.start_date = self.data.index[self.current_day_idx]
         
+        self.budget = investment
         self.portfolio_val = investment
 
         self.lookback_period = lookback_period
@@ -36,7 +37,7 @@ class StockTradingEnv(gym.Env):
         # matrix containing the asset weights and log returns of the assets over the look back period
         # plus volatility metrics (optional)
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, 
-                                                shape=(self.num_companies, self.lookback_period+1), dtype=np.float32)
+                                                shape=(self.num_companies, self.lookback_period), dtype=np.float32)
 
         # define what actions are available
         # sum must be 1 (100% of portfolio)
@@ -49,14 +50,18 @@ class StockTradingEnv(gym.Env):
         # and also technical indicators (optionally)
         data = {
             'portfolio_allocation': self._portfolio_allocation,
-            'stock_lrs': [] if self.current_day_idx >= len(self.data) else self._get_stock_lrs(),
+            'stock_lrs': [] if self.current_day_idx > len(self.data) else self._get_stock_lrs(),
             # 'volatility_metrics': self._get_volatility_metrics()
         }
 
         state = np.zeros((self.num_companies, self.lookback_period))
 
         state[:,0] = data['portfolio_allocation'] # first column consists of portfolio weights
-        state[:,1:] = data['stock_lrs'].fillna(0).T # the log return of each asset
+        
+        if type(data['stock_lrs']) != list:
+            state[:,1:] = data['stock_lrs'].fillna(0).T # the log return of each asset
+        else:
+            state = None
 
         return state
         
@@ -64,6 +69,8 @@ class StockTradingEnv(gym.Env):
 
     def reset(self, seed: Optional[int] = None, options: Optional[dict] = None):
         super().reset(seed=seed)
+
+        self.portfolio_val = self.budget
 
         self.A = 0
         self.B = 0
@@ -73,14 +80,13 @@ class StockTradingEnv(gym.Env):
         # reset day
         self.current_day_idx = self.lookback_period - 1
 
-
         # return initial observation
         return self._get_obs(), {}
     
 
     def step (self, action):
         # normalize action to ensure it sums to 1
-        action = action / np.sum(action)
+        action = np.exp(action) / np.sum(np.exp(action))
 
         # calculate reward based on change in portfolio value
         reward = self._calculate_diff_sharpe_ratio(new_weights=action)
@@ -94,8 +100,8 @@ class StockTradingEnv(gym.Env):
         # check if episode is done
         done = self.current_day_idx >= len(self.data)
 
-        # return observation, reward, done, and info
-        return self._get_obs(), reward, done, {}
+        # return observation, reward, done, truncated and info
+        return self._get_obs(), reward, done, False, {}
     
 
     def _load_dataset(self):
@@ -136,12 +142,12 @@ class StockTradingEnv(gym.Env):
         new_portfolio_val = np.dot(shares, new_prices)
         old_portfolio_val = self.portfolio_val
 
-        portfolio_return = (new_portfolio_val-old_portfolio_val)/new_portfolio_val
+        portfolio_return = (new_portfolio_val-old_portfolio_val)/old_portfolio_val
 
         delta_A = portfolio_return - self.A
         delta_B = portfolio_return**2 - self.B
 
-        reward = ((self.B*delta_A)-1/2*(self.A*delta_B))/((self.B-self.A**2)**(3/2))
+        reward = ((self.B*delta_A)-1/2*(self.A*delta_B))/((self.B-self.A**2)**(3/2)+1e-8)
 
         self.A += self.eta * delta_A
         self.B += self.eta * delta_B
