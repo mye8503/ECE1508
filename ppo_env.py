@@ -57,7 +57,7 @@ class StockTradingEnv(gym.Env):
         state = np.zeros((self.num_companies, self.lookback_period))
 
         state[:,0] = data['portfolio_allocation'] # first column consists of portfolio weights
-        
+
         if type(data['stock_lrs']) != list:
             state[:,1:] = data['stock_lrs'].fillna(0).T # the log return of each asset
         else:
@@ -88,17 +88,17 @@ class StockTradingEnv(gym.Env):
         # normalize action to ensure it sums to 1
         action = np.exp(action) / np.sum(np.exp(action))
 
+        # update date
+        self.current_day_idx += 1
+        
         # calculate reward based on change in portfolio value
         reward = self._calculate_diff_sharpe_ratio(new_weights=action)
 
+        # check if episode is done
+        done = self.current_day_idx >= len(self.data) -1 # account for indexing starting from 0
+
         # update portfolio allocation
         self._portfolio_allocation = action
-
-        # update date
-        self.current_day_idx += 1
-
-        # check if episode is done
-        done = self.current_day_idx >= len(self.data)
 
         # return observation, reward, done, truncated and info
         return self._get_obs(), reward, done, False, {}
@@ -133,14 +133,14 @@ class StockTradingEnv(gym.Env):
     def _calculate_diff_sharpe_ratio(self, new_weights):
         # calculating the reward, which is the differential sharpe ratio
         # we are assuming that at the end of the trading day, we are able to reallocate our portfolio
-        today = self.data.index[self.current_day_idx]
-        yesterday = self.data.index[self.current_day_idx-1]
+        today = self.data.index[self.current_day_idx] # t+1
+        yesterday = self.data.index[self.current_day_idx-1] # t
 
-        shares = self._calculate_shares(new_weights, yesterday) 
-        new_prices = self.data['Close'][today:today].values.flatten()
+        shares = self._calculate_shares(new_weights, yesterday) # share_t
+        new_prices = self.data['Close'][today:today].values.flatten() 
 
-        new_portfolio_val = np.dot(shares, new_prices)
-        old_portfolio_val = self.portfolio_val
+        new_portfolio_val = np.dot(shares, new_prices) # p_(t+1)
+        old_portfolio_val = self.portfolio_val # p_t
 
         portfolio_return = (new_portfolio_val-old_portfolio_val)/old_portfolio_val
 
