@@ -102,8 +102,8 @@ lookback = 60
 eta = 1/252
 investment = 100_000
 # n_env = 10
-# n_env = 5
-n_env = 2
+n_env = 5
+# n_env = 2
 
 
 # PPO's hyperparams (as specified in the paper, adjusted some vars to suit the size of the dataset)
@@ -111,8 +111,8 @@ gamma = .9
 initial_lr = 3e-4
 final_lr = 1e-5
 # batch_size = 252 * 5
-# batch_size = 252
-batch_size = int(252/2)
+batch_size = 252
+# batch_size = int(252/2)
 n_epochs = 16
 gae_lambda = .9
 clip_range = .25
@@ -133,8 +133,8 @@ eval_freq = 21_000 // n_env # used in evalcallback
 device = 'cpu' # training is more efficient on cup than gpu (for SubprocVecEnv)
 
 # number of agents to train indep
-n_agents = 2
-# n_agents = 3
+# n_agents = 2
+n_agents = 3
 seeds = [i*111 for i in range(1, n_agents+1)]
 
 best_seed = None 
