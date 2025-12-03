@@ -6,7 +6,7 @@ from typing import Callable
 from ppo_env import StockTradingEnv
 import numpy as np
 
-from stable_baselines3 import PPO
+from stable_baselines3 import DDPG
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import SubprocVecEnv
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -27,11 +27,11 @@ def linear_schedule(initial_value: float, final_value: float) -> Callable[[float
 
 
 
-class Agent():
+class DDPG_Agent():
     def __init__(self, policy, train_env, val_env, gamma, 
-                initial_lr, final_lr, batch_size, n_epochs, 
-                gae_lambda, clip_range,n_steps, total_steps, policy_kwargs, 
-                seed, eval_freq, time_window, device='cpu', trained_weights_path=None):
+                initial_lr, final_lr, batch_size, tau, action_noise,
+                n_steps, total_steps, policy_kwargs, seed, eval_freq,
+                time_window, device='cpu', trained_weights_path=None):
         
         
         # create directory for saving train tensorboards
@@ -54,17 +54,33 @@ class Agent():
         self.device = device
         
         if trained_weights_path is not None and os.path.exists(trained_weights_path):
-            self.model = PPO.load(trained_weights_path, train_env, device)
+            self.model = DDPG.load(trained_weights_path, train_env, device)
 
             self.model.set_random_seed(seed)
 
         else:
-            self.model = PPO(policy=policy, env=train_env, 
-                            learning_rate=linear_schedule(initial_lr, final_lr),
-                            n_steps=n_steps, batch_size=batch_size, n_epochs=n_epochs,
-                            gamma=gamma, gae_lambda=gae_lambda, clip_range=clip_range,
-                            tensorboard_log=self.train_log_dir, policy_kwargs=policy_kwargs,
-                            seed=seed, device=device, verbose=1)
+            self.model = DDPG(
+                policy=policy,
+                env=train_env,
+                learning_rate=linear_schedule(initial_lr, final_lr),
+                buffer_size=1000000,
+                learning_starts=100,
+                batch_size=batch_size,
+                tau=tau,
+                gamma=gamma,                
+                train_freq=1,
+                gradient_steps=1,
+                action_noise=action_noise,
+                replay_buffer_class=None,
+                replay_buffer_kwargs=None,
+                optimize_memory_usage=False,
+                n_steps=n_steps,
+                tensorboard_log=self.train_log_dir,
+                policy_kwargs=policy_kwargs,
+                verbose=1,
+                seed=seed,
+                device=device
+            )
             
     
     def train(self):
@@ -75,9 +91,9 @@ class Agent():
 
     
     def eval(self):
-        self.best_model_path = f'{self.model_dir}/best_model.zip'
+        self.best_model_path = f'{self.model_dir}/best_model'
 
-        best_model = PPO.load(self.best_model_path, self.val_env, device=self.device)
+        best_model = DDPG.load(self.best_model_path, self.val_env, device=self.device)
 
         mean_val_reward, _ = evaluate_policy(best_model, self.val_env)
 
@@ -91,68 +107,86 @@ class Agent():
 trainsets = sorted(os.listdir('data/train'))
 valsets = sorted(os.listdir('data/val'))
 
-# get the path to all training and validation sets
 trainset_paths = [f'data/train/{trainset}' for trainset in trainsets]
 valset_paths = [f'data/val/{valset}' for valset in valsets]
 
 
 
-# params of the env (as specified in the paper)
+# environment parameters
 lookback = 60
 eta = 1/252
 investment = 100_000
-# n_env = 10
-n_env = 5
-# n_env = 2
+n_env = 1 #5
 
 
-# PPO's hyperparams (as specified in the paper, adjusted some vars to suit the size of the dataset)
-gamma = .9
+# model hyperparameters
+policy = 'MlpPolicy'
 initial_lr = 3e-4
 final_lr = 1e-5
-# batch_size = 252 * 5
-batch_size = 252
-# batch_size = int(252/2)
-n_epochs = 16
-gae_lambda = .9
-clip_range = .25
-n_steps = 252 * n_env
-episodes = 50
-total_steps = 252 * 5 * n_env * episodes 
 
-policy = 'MlpPolicy'
-layers = [32, 64, 32]
+# hyperparameters from paper https://pmc.ncbi.nlm.nih.gov/articles/PMC8512099/#:~:text=The%20DDPG%20consists%20of%20a,continuous%20action%20at%20each%20step. 
+buffer_size = 100000
+learning_starts = 100
+batch_size = 128
+tau = 0.01
+gamma = 0.8
+train_freq = 1
+gradient_steps = 1
+layers = [64, 32]
 activation_func = nn.Tanh
-log_std_init = -1
 
-policy_kwargs = {'net_arch': layers,
-                 'activation_fn': activation_func,
-                 'log_std_init': log_std_init}
+policy_kwargs = {
+    'net_arch': layers,
+    'activation_fn': activation_func,
+    'n_critics': 1,
+}
 
-eval_freq = 21_000 // n_env # used in evalcallback
-device = 'cpu' # training is more efficient on cup than gpu (for SubprocVecEnv)
+# environment parameters
+lookback = 60
+eta = 1/252
+investment = 100_000
+n_env = 10 #5
 
-# number of agents to train indep
-# n_agents = 2
-n_agents = 3
-seeds = [i*111 for i in range(1, n_agents+1)]
+action_noise = None
+replay_buffer_class = None
+replay_buffer_kwargs = None
+optimize_memory_usage = False
+n_steps = 252 * n_env
+episodes = 100
+total_steps = 252 * 1 * n_env * episodes 
 
-best_seed = None 
+tensorboard_log = None
+verbose = 1
+seed = None
+device = 'cpu'
+
+eval_freq = 100_000 // n_env # used in evalcallback
+# eval_freq = 252*5 // n_env # used in evalcallback
+device = 'cpu'
+seeds = [i*111 for i in range(1, 3)]
+
+best_seed = None
 
 best_models = []
 
 
 if __name__=='__main__':
-
-################################## train loop #########################################
-    for i in range(len(valset_paths)):
     
-        best_model = best_seed # the seed policy to be used for the training window
+    for i in range(len(valset_paths)):
+
+        print("------------------------------------------------------------")
+        print("Training on dataset:", trainset_paths[i])
+        print("------------------------------------------------------------")
+    
+        best_model = best_seed
         
         best_eval_reward = -np.inf
-        best_seed = None # var to store best seed for the training window
+        best_seed = None
         
         for seed in seeds:
+            print("------------------------------------------------------------")
+            print("Seed:", seed)
+            print("------------------------------------------------------------")
 
             train_env_kwargs = {'investment': investment, 'lookback_period': lookback, 
                                 'eta': eta, 'dataset_path': trainset_paths[i]}
@@ -166,10 +200,10 @@ if __name__=='__main__':
             val_env = make_vec_env(env_id=StockTradingEnv, n_envs=1, 
                                 vec_env_cls=SubprocVecEnv, env_kwargs=val_env_kwargs)
 
-            agent = Agent(policy, train_env, val_env, gamma, initial_lr,
-                        final_lr, batch_size, n_epochs, gae_lambda, clip_range, n_steps, 
-                        total_steps, policy_kwargs, seed, eval_freq, time_window=i, 
-                        device=device, trained_weights_path=best_model)
+            agent = DDPG_Agent(policy, train_env, val_env, gamma, initial_lr,
+                            final_lr, batch_size, tau, action_noise, n_steps, 
+                            total_steps, policy_kwargs, seed, eval_freq, time_window=i, 
+                            device=device, trained_weights_path=best_model)
             
             agent.train()
 
@@ -185,9 +219,15 @@ if __name__=='__main__':
 
         best_models.append(best_seed)
 
+        print("------------------------------------------------------------")
+        print("DONE TRAINING on dataset:", trainset_paths[i])
+        print("------------------------------------------------------------")
+
 
     # move the best model of each training window to the same dir
     for model in best_models:
         destination = f'best_model/{model.split('/')[-2]}'
         os.makedirs(destination, exist_ok=True)
         shutil.move(model, f'{destination}/{model.split('/')[-1]}')
+
+        
