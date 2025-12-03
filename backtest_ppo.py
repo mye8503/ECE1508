@@ -16,7 +16,7 @@ lookback = 60
 
 
 # get the path for the best trained model for each training window
-best_model_paths = sorted([os.path.join('best_model', f) for f in os.listdir('best_model') if not os.path.isfile(f)])
+best_model_paths = sorted([os.path.join('PPO_best_model', f) for f in os.listdir('PPO_best_model') if not os.path.isfile(f)])
 
 # get the path to the testsets
 testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
@@ -63,7 +63,7 @@ def plot_annual_returns(portfolio_vals_sets, years, path_to_save=None):
     plots and saves the annual return for a set of daily portfolio val.
     '''
     
-    annual_return_set = [(port_val[-1]-port_val[0])/port_val[0] for port_val in portfolio_vals_sets]
+    annual_return_set = [(port_val[-1]-port_val[0])/port_val[0]*100 for port_val in portfolio_vals_sets]
     y_pos = np.arange(len(years))
     avg_annual_return = np.mean(annual_return_set)
 
@@ -73,6 +73,7 @@ def plot_annual_returns(portfolio_vals_sets, years, path_to_save=None):
     ax.axvline(avg_annual_return, label='Mean', ls='--')
     ax.axvline(0, color='black')
     
+    ax.set_xticks(np.arange(-40, 100, 20), labels=[f'{returns}%' for returns in np.arange(-40, 100, 20)])
     ax.set_yticks(y_pos, labels=years)
     ax.invert_yaxis()  # labels read top-to-bottom
     
@@ -109,7 +110,7 @@ def calculate_annual_sharpe_ratio(portfolio_vals: list, days=252, annual_risk_fr
 
 def plot_sharpe_ratio(portfolio_vals_sets, years, path_to_save=None):
     '''
-    plots the annual Sharpe ratio ever the years
+    plots and saves the annual Sharpe ratio ever the years
     '''
 
     annual_sharpes = [calculate_annual_sharpe_ratio(port_vals) for port_vals in portfolio_vals_sets]
@@ -130,12 +131,80 @@ def plot_sharpe_ratio(portfolio_vals_sets, years, path_to_save=None):
 
     plt.legend()
     plt.grid()
-    plt.tight_layout()
+    fig.tight_layout()
 
     if path_to_save is not None:
         plt.savefig(path_to_save)
 
     plt.show()
+
+
+
+def get_monthly_returns(portfolio_val_sets:list):
+    '''
+    helper function to get the monthly return from daily portfolio values.
+    '''
+
+    n_days_a_year = 252
+    n_days_a_month = n_days_a_year // 12
+
+    monthly_returns_sets = []
+    
+    for prices in portfolio_val_sets:
+        monthly_returns = []
+        for i in range(0, len(prices), n_days_a_month):
+            if i + n_days_a_month < len(prices):
+                monthly_returns.append((prices[i+n_days_a_month]-prices[i])/prices[i])
+            elif i + 10 < len(prices):
+                monthly_returns.append((prices[-1]-prices[i])/prices[i])
+                break
+
+        monthly_returns_sets.append(monthly_returns)
+    
+    return monthly_returns_sets
+
+
+
+
+def plot_monthly_returns(portfolio_val_sets:list, years, path_to_save=None):
+    '''
+    plots and saves the monthly return given daily portfolio values.
+    '''
+
+
+    n_years = len(years)
+
+    # get the monthly return for each test year
+    monthly_returns_sets = get_monthly_returns(portfolio_val_sets)
+
+    n_months = len(monthly_returns_sets[0])
+
+    figure, ax = plt.subplots()
+
+    ax.imshow(monthly_returns_sets, cmap='RdYlGn', aspect='auto')
+    
+    ax.set_xticks(np.arange(n_months+1, step=2), labels=np.arange(1, n_months+1, step=2)+3) # the first 3 months are used as observation
+    ax.set_yticks(np.arange(n_years), labels=years)
+    ax.set_xlabel('Month')
+    ax.set_ylabel('Year')
+
+    ax.set_title('Monthly returns')
+
+    for i in range(n_years):
+        for j in range(n_months):
+            
+            ax.text(j,i, f'{monthly_returns_sets[i][j]*100:.1f}', 
+                    ha='center', va='center', color='black')
+            
+    figure.tight_layout()
+
+    if path_to_save is not None:
+        plt.savefig(path_to_save)
+
+    plt.show()
+
+
+
 
 
 
@@ -158,6 +227,7 @@ if __name__=='__main__':
                                     investment=investment, eta=eta, lookback=lookback)
         
         print(f'portfolio value at the end of {year}: {portfolio_vals[-1]: .2f}')
+        print(len(portfolio_vals))
 
         portfolio_vals_sets.append(portfolio_vals)
         portfolio_weights_sets.append(portfolio_weights)
@@ -166,5 +236,7 @@ if __name__=='__main__':
 
     annual_returns_plot_name = f'{save_results_path}/annual_returns'
     annual_sharpe_plot_name = f'{save_results_path}/annual_sharpe_ratio'
+    monthly_returns_plot_name = f'{save_results_path}/monthly_returns'
     plot_annual_returns(portfolio_vals_sets, years, annual_returns_plot_name)
     plot_sharpe_ratio(portfolio_vals_sets, years, annual_sharpe_plot_name)
+    plot_monthly_returns(portfolio_vals_sets, years, monthly_returns_plot_name)
