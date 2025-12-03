@@ -205,6 +205,36 @@ def plot_monthly_returns(portfolio_val_sets:list, years, path_to_save=None):
 
 
 
+def monthly_retuns_hist(portfolio_val_sets, n_bins=20, path_to_save=None):
+    '''
+    plots and saves the distribution of monthly returns given the daily porfolio values.
+    '''
+
+
+    monthly_returns_sets = np.array(get_monthly_returns(portfolio_val_sets)).flatten()
+    mean_monthly_return = np.mean(monthly_returns_sets)
+
+    fig, ax = plt.subplots()
+
+    ax.hist(monthly_returns_sets, bins=n_bins, 
+            alpha=.4, color='red', edgecolor='white')
+    ax.axvline(0, color='black')
+    ax.axvline(mean_monthly_return, ls='--', color='red')
+
+    ax.set_xticks(np.arange(-15, 25, 5)/100, labels=[f'{returns}%' for returns in np.arange(-15, 25, 5)])
+    
+    ax.set_xlabel('Returns')
+    ax.set_ylabel('Number of Months')
+    ax.set_title('distribution of monthly returns')
+
+    fig.tight_layout()
+
+    if path_to_save is not None:
+        plt.savefig(path_to_save)
+    
+    plt.show()
+
+
 
 
 
@@ -227,7 +257,6 @@ if __name__=='__main__':
                                     investment=investment, eta=eta, lookback=lookback)
         
         print(f'portfolio value at the end of {year}: {portfolio_vals[-1]: .2f}')
-        print(len(portfolio_vals))
 
         portfolio_vals_sets.append(portfolio_vals)
         portfolio_weights_sets.append(portfolio_weights)
@@ -237,6 +266,9 @@ if __name__=='__main__':
     annual_returns_plot_name = f'{save_results_path}/annual_returns'
     annual_sharpe_plot_name = f'{save_results_path}/annual_sharpe_ratio'
     monthly_returns_plot_name = f'{save_results_path}/monthly_returns'
+    monthly_returns_plot_name = f'{save_results_path}/monthly_returns'
+    monthly_returns_dist_name = f'{save_results_path}/monthly_returns_dist'
     plot_annual_returns(portfolio_vals_sets, years, annual_returns_plot_name)
     plot_sharpe_ratio(portfolio_vals_sets, years, annual_sharpe_plot_name)
     plot_monthly_returns(portfolio_vals_sets, years, monthly_returns_plot_name)
+    monthly_retuns_hist(portfolio_vals_sets, path_to_save=monthly_returns_dist_name)
