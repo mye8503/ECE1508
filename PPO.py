@@ -91,6 +91,7 @@ class Agent():
 trainsets = sorted(os.listdir('data/train'))
 valsets = sorted(os.listdir('data/val'))
 
+# get the path to all training and validation sets
 trainset_paths = [f'data/train/{trainset}' for trainset in trainsets]
 valset_paths = [f'data/val/{valset}' for valset in valsets]
 
@@ -100,21 +101,23 @@ valset_paths = [f'data/val/{valset}' for valset in valsets]
 lookback = 60
 eta = 1/252
 investment = 100_000
-n_env = 10
-# n_env = 3
+# n_env = 10
+n_env = 5
+# n_env = 2
 
 
-# PPO's hyperparams (as specified in the paper)
+# PPO's hyperparams (as specified in the paper, adjusted some vars to suit the size of the dataset)
 gamma = .9
 initial_lr = 3e-4
 final_lr = 1e-5
-batch_size = 252 * 5
+# batch_size = 252 * 5
+batch_size = 252
+# batch_size = int(252/2)
 n_epochs = 16
 gae_lambda = .9
 clip_range = .25
 n_steps = 252 * n_env
-episodes = 600
-# episodes = 5
+episodes = 50
 total_steps = 252 * 5 * n_env * episodes 
 
 policy = 'MlpPolicy'
@@ -126,24 +129,28 @@ policy_kwargs = {'net_arch': layers,
                  'activation_fn': activation_func,
                  'log_std_init': log_std_init}
 
-eval_freq = 100_000 // n_env # used in evalcallback
-# eval_freq = 252*5 // n_env # used in evalcallback
-device = 'cpu'
-seeds = [i*111 for i in range(1, 6)]
+eval_freq = 21_000 // n_env # used in evalcallback
+device = 'cpu' # training is more efficient on cup than gpu (for SubprocVecEnv)
 
-best_seed = None
+# number of agents to train indep
+# n_agents = 2
+n_agents = 3
+seeds = [i*111 for i in range(1, n_agents+1)]
+
+best_seed = None 
 
 best_models = []
 
 
 if __name__=='__main__':
-    
+
+################################## train loop #########################################
     for i in range(len(valset_paths)):
     
-        best_model = best_seed
+        best_model = best_seed # the seed policy to be used for the training window
         
         best_eval_reward = -np.inf
-        best_seed = None
+        best_seed = None # var to store best seed for the training window
         
         for seed in seeds:
 
@@ -184,29 +191,3 @@ if __name__=='__main__':
         destination = f'best_model/{model.split('/')[-2]}'
         os.makedirs(destination, exist_ok=True)
         shutil.move(model, f'{destination}/{model.split('/')[-1]}')
-
-        
-        
-    
-   
-   
-   
-   
-   
-   
-   
-   
-   
-   
-    # ppo = PPO('MlpPolicy', env=train_env, 
-    #             learning_rate=linear_schedule(initial_value=initial_lr, final_value=final_lr),
-    #             n_steps=n_steps, batch_size=batch_size, n_epochs=n_epochs, gamma=gamma,
-    #             gae_lambda=gae_lambda, clip_range=clip_range, policy_kwargs=policy_kwargs,
-    #             seed=111, device=device, verbose=1)
-
-    # eval_callbacks = EvalCallback(val_env, eval_freq=eval_freq, 
-    #                             log_path=val_log_dir, best_model_save_path=model_dir)
-
-    # ppo.learn(total_timesteps=total_steps, callback=eval_callbacks)
-    
-        
