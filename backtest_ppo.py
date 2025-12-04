@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -91,7 +92,7 @@ def plot_annual_returns(portfolio_vals_sets, years, path_to_save=None):
 
 def calculate_annual_sharpe_ratio(portfolio_vals: list, days=252, annual_risk_free_rate=0):
     '''
-    calculates the annual Sharpe ratio from daily values of of a portfolio for a year.
+    calculates the annual Sharpe ratio from daily values of a portfolio for a year.
     '''
     
     #calculate the daily rf
@@ -272,3 +273,6 @@ if __name__=='__main__':
     plot_sharpe_ratio(portfolio_vals_sets, years, annual_sharpe_plot_name)
     plot_monthly_returns(portfolio_vals_sets, years, monthly_returns_plot_name)
     monthly_retuns_hist(portfolio_vals_sets, path_to_save=monthly_returns_dist_name)
+
+    with open(f'{save_results_path}/portfolio_vals.pkl', 'wb') as f:
+        pickle.dump(portfolio_vals_sets, f)

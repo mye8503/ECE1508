@@ -40,8 +40,7 @@ class StockTradingEnv(gym.Env):
                                                 shape=(self.num_companies, self.lookback_period), dtype=np.float32)
 
         # define what actions are available
-        # sum must be 1 (100% of portfolio)
-        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_companies,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=-10, high=10, shape=(self.num_companies,), dtype=np.float32)
 
     
     def _get_obs(self):
@@ -87,6 +86,8 @@ class StockTradingEnv(gym.Env):
     def step (self, action):
         # normalize action to ensure it sums to 1
         action = np.exp(action) / np.sum(np.exp(action))
+        # action = np.clip(action, 0, 1)
+        # action = action/np.max([np.sum(action), 1e-8])
 
         # update date
         self.current_day_idx += 1
