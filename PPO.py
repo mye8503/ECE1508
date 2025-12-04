@@ -188,6 +188,6 @@ if __name__=='__main__':
 
     # move the best model of each training window to the same dir
     for model in best_models:
-        destination = f'best_model/{model.split('/')[-2]}'
+        destination = f'PPO_best_model/{model.split('/')[-2]}'
         os.makedirs(destination, exist_ok=True)
         shutil.move(model, f'{destination}/{model.split('/')[-1]}')
