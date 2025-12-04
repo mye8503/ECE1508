@@ -14,6 +14,7 @@ a2c_daily_vals_sets = 'A2C_test_results/portfolio_vals.pkl'
 acer_daily_vals_sets = 'ACER_test_results/portfolio_vals.pkl'
 EQ_daily_vals_sets = 'EQ_test_results/portfolio_vals.pkl'
 BH_daily_vals_sets = 'BH_test_results/portfolio_vals.pkl'
+MVO_daily_vals_sets = 'MVO_test_results/portfolio_vals.pkl'
 
 comparison_graphs_path = 'comparison_graphs' # dir to save graphs
 os.makedirs(comparison_graphs_path, exist_ok=True)
@@ -35,7 +36,8 @@ data_dict = {
     'a2c_val_sets':open_file(a2c_daily_vals_sets),
     'acer_val_sets':open_file(acer_daily_vals_sets),
     'eq_val_sets':open_file(EQ_daily_vals_sets),
-    'bh_val_sets':open_file(BH_daily_vals_sets)
+    'bh_val_sets':open_file(BH_daily_vals_sets),
+    'mvo_val_sets':open_file(MVO_daily_vals_sets)
 }
 
 
