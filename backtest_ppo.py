@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from ppo_env import StockTradingEnv
 
 from stable_baselines3 import PPO
+from stable_baselines3 import DDPG
 
 
 
@@ -16,7 +17,7 @@ lookback = 60
 
 
 # get the path for the best trained model for each training window
-best_model_paths = sorted([os.path.join('PPO_best_model', f) for f in os.listdir('PPO_best_model') if not os.path.isfile(f)])
+best_model_paths = sorted([os.path.join('DDPG_best_model', f) for f in os.listdir('DDPG_best_model') if not os.path.isfile(f)])
 
 # get the path to the testsets
 testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
@@ -42,7 +43,7 @@ def test_model(model_path, testset_path,
     
     state, _ = env.reset()
 
-    model = PPO.load(model_path, env)
+    model = DDPG.load(model_path, env)
 
     portfolio_weights.append(env._portfolio_allocation)
 
@@ -240,7 +241,7 @@ def monthly_retuns_hist(portfolio_val_sets, n_bins=20, path_to_save=None):
 
 if __name__=='__main__':
     
-    save_results_path = 'PPO_test_results'
+    save_results_path = 'DDPG_test_results'
     os.makedirs(save_results_path, exist_ok=True)
 
     portfolio_vals_sets = []
