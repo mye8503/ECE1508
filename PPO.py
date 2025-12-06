@@ -84,65 +84,62 @@ class Agent():
         return mean_val_reward
 
         
-            
-
-
-
-trainsets = sorted(os.listdir('data/train'))
-valsets = sorted(os.listdir('data/val'))
-
-# get the path to all training and validation sets
-trainset_paths = [f'data/train/{trainset}' for trainset in trainsets]
-valset_paths = [f'data/val/{valset}' for valset in valsets]
-
-
-
-# params of the env (as specified in the paper)
-lookback = 60
-eta = 1/252
-investment = 100_000
-# n_env = 10
-n_env = 5
-# n_env = 2
-
-
-# PPO's hyperparams (as specified in the paper, adjusted some vars to suit the size of the dataset)
-gamma = .9
-initial_lr = 3e-4
-final_lr = 1e-5
-# batch_size = 252 * 5
-batch_size = 252
-# batch_size = int(252/2)
-n_epochs = 16
-gae_lambda = .9
-clip_range = .25
-n_steps = 252 * n_env
-episodes = 50
-total_steps = 252 * 5 * n_env * episodes 
-
-policy = 'MlpPolicy'
-layers = [32, 64, 32]
-activation_func = nn.Tanh
-log_std_init = -1
-
-policy_kwargs = {'net_arch': layers,
-                 'activation_fn': activation_func,
-                 'log_std_init': log_std_init}
-
-eval_freq = 21_000 // n_env # used in evalcallback
-device = 'cpu' # training is more efficient on cup than gpu (for SubprocVecEnv)
-
-# number of agents to train indep
-# n_agents = 2
-n_agents = 3
-seeds = [i*111 for i in range(1, n_agents+1)]
-
-best_seed = None 
-
-best_models = []
 
 
 if __name__=='__main__':
+
+    trainsets = sorted(os.listdir('data/train'))
+    valsets = sorted(os.listdir('data/val'))
+
+    # get the path to all training and validation sets
+    trainset_paths = [f'data/train/{trainset}' for trainset in trainsets]
+    valset_paths = [f'data/val/{valset}' for valset in valsets]
+
+
+
+    # params of the env (as specified in the paper)
+    lookback = 60
+    eta = 1/252
+    investment = 100_000
+    # n_env = 10
+    n_env = 5
+    # n_env = 2
+
+
+    # PPO's hyperparams (as specified in the paper, adjusted some vars to suit the size of the dataset)
+    gamma = .9
+    initial_lr = 3e-4
+    final_lr = 1e-5
+    # batch_size = 252 * 5
+    batch_size = 252
+    # batch_size = int(252/2)
+    n_epochs = 16
+    gae_lambda = .9
+    clip_range = .25
+    n_steps = 252 * n_env
+    episodes = 50
+    total_steps = 252 * 5 * n_env * episodes 
+
+    policy = 'MlpPolicy'
+    layers = [32, 64, 32]
+    activation_func = nn.Tanh
+    log_std_init = -1
+
+    policy_kwargs = {'net_arch': layers,
+                    'activation_fn': activation_func,
+                    'log_std_init': log_std_init}
+
+    eval_freq = 21_000 // n_env # used in evalcallback
+    device = 'cpu' # training is more efficient on cup than gpu (for SubprocVecEnv)
+
+    # number of agents to train indep
+    # n_agents = 2
+    n_agents = 3
+    seeds = [i*111 for i in range(1, n_agents+1)]
+
+    best_seed = None 
+
+    best_models = []
 
 ################################## train loop #########################################
     for i in range(len(valset_paths)):
