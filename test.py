@@ -1,36 +1,19 @@
 import pickle
-from env_test import TestStockTradingEnv
+import matplotlib.pyplot as plt
 
-data = pickle.load(open("dataset.pkl", "rb"))
+data = pickle.load(open("new_dataset.pkl", "rb"))
 
-# print(data['Log return', 'GOOG'])
+data2 = data['Close']
+tickers = data2.columns.tolist()
+print(tickers)
+plt.figure(figsize=(12,6))
+for column in data2.columns:
+    plt.plot(data2.index, data2[column], label=column)
 
-x = TestStockTradingEnv(dataset_path="data/train/2005-2009.pkl")
 
-state, _ = x.reset()
+plt.xlabel('Date')
+plt.ylabel('Stock Close Price')
+plt.title('S&P 500 Stock Close Prices Over Time')
 
-print(state['current_date'])
-
-done = False
-count = 0
-
-up  = 0
-down = 0
-
-while not done:
-    action = [0.2, 0.2, 0.2, 0.2, 0.2]  # equal weighting
-    state, reward, done, _ = x.step(action)
-
-    if reward > 0: up += 1
-    if reward < 0: down += 1
-
-    # if count % 50 == 0:
-    #     for item in state:
-    #         print(item)
-    #         print(state[item])
-    #         input()
-
-    # if count % 100 == 0: print("current date:", state['current_date'], "|| reward:", reward)
-    count += 1
-
-print(up, down, count)
+plt.legend()
+plt.show()
