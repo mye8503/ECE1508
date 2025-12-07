@@ -111,14 +111,6 @@ trainset_paths = [f'data/train/{trainset}' for trainset in trainsets]
 valset_paths = [f'data/val/{valset}' for valset in valsets]
 
 
-
-# environment parameters
-lookback = 60
-eta = 1/252
-investment = 100_000
-n_env = 1 #5
-
-
 # model hyperparameters
 policy = 'MlpPolicy'
 initial_lr = 3e-4
