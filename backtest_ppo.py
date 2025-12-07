@@ -2,6 +2,7 @@ import os
 import pickle
 
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
 
 from ppo_env import StockTradingEnv
@@ -60,8 +61,10 @@ def plot_annual_returns(portfolio_vals_sets, years, path_to_save=None):
     ax.barh(y_pos, annual_return_set, align='center', alpha=.7)
     ax.axvline(avg_annual_return, label='Mean', ls='--')
     ax.axvline(0, color='black')
+
+    x_ticks = ax.get_xticks()
+    ax.set_xticks(x_ticks, labels=[f'{int(returns)}%' for returns in x_ticks]) 
     
-    ax.set_xticks(np.arange(-40, 100, 20), labels=[f'{returns}%' for returns in np.arange(-40, 100, 20)])
     ax.set_yticks(y_pos, labels=years)
     ax.invert_yaxis()  # labels read top-to-bottom
     
@@ -169,7 +172,11 @@ def plot_monthly_returns(portfolio_val_sets:list, years, path_to_save=None):
 
     figure, ax = plt.subplots()
 
-    ax.imshow(monthly_returns_sets, cmap='RdYlGn', aspect='auto')
+    min_norm = min(-np.max(monthly_returns_sets), np.min(monthly_returns_sets))
+    max_norm = max(-np.min(monthly_returns_sets), np.max(monthly_returns_sets))
+
+    divnorm = matplotlib.colors.TwoSlopeNorm(vmin=min_norm, vcenter=0., vmax=max_norm)
+    ax.imshow(monthly_returns_sets, cmap='RdYlGn', norm=divnorm, aspect='auto')
     
     ax.set_xticks(np.arange(n_months+1, step=2), labels=np.arange(1, n_months+1, step=2)+3) # the first 3 months are used as observation
     ax.set_yticks(np.arange(n_years), labels=years)
@@ -199,7 +206,7 @@ def monthly_retuns_hist(portfolio_val_sets, n_bins=20, path_to_save=None):
     '''
 
 
-    monthly_returns_sets = np.array(get_monthly_returns(portfolio_val_sets)).flatten()
+    monthly_returns_sets = np.array(get_monthly_returns(portfolio_val_sets)).flatten()*100
     mean_monthly_return = np.mean(monthly_returns_sets)
 
     fig, ax = plt.subplots()
@@ -209,7 +216,8 @@ def monthly_retuns_hist(portfolio_val_sets, n_bins=20, path_to_save=None):
     ax.axvline(0, color='black')
     ax.axvline(mean_monthly_return, ls='--', color='red')
 
-    ax.set_xticks(np.arange(-15, 25, 5)/100, labels=[f'{returns}%' for returns in np.arange(-15, 25, 5)])
+    x_ticks = ax.get_xticks()
+    ax.set_xticks(x_ticks, labels=[f'{int(returns)}%' for returns in x_ticks])
     
     ax.set_xlabel('Returns')
     ax.set_ylabel('Number of Months')
@@ -238,7 +246,8 @@ if __name__=='__main__':
     best_model_paths = sorted([os.path.join('PPO_best_model', f) for f in os.listdir('PPO_best_model') if not os.path.isfile(f)])
 
     # get the path to the testsets
-    testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
+    # testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
+    testset_paths = sorted([os.path.join('new_data/test', f) for f in os.listdir('new_data/test') if not os.path.isfile(f)])
 
     
     save_results_path = 'PPO_test_results'

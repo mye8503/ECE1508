@@ -19,7 +19,8 @@ if __name__=='__main__':
 
 
     # get the path to the testsets
-    testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
+    # testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
+    testset_paths = sorted([os.path.join('new_data/test', f) for f in os.listdir('new_data/test') if not os.path.isfile(f)])
 
 
     save_results_path = 'MVO_test_results'
