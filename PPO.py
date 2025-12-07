@@ -88,12 +88,16 @@ class Agent():
 
 if __name__=='__main__':
 
-    trainsets = sorted(os.listdir('data/train'))
-    valsets = sorted(os.listdir('data/val'))
+    # trainsets = sorted(os.listdir('data/train'))
+    # valsets = sorted(os.listdir('data/val'))
+    trainsets = sorted(os.listdir('new_data/train'))
+    valsets = sorted(os.listdir('new_data/val'))
 
     # get the path to all training and validation sets
-    trainset_paths = [f'data/train/{trainset}' for trainset in trainsets]
-    valset_paths = [f'data/val/{valset}' for valset in valsets]
+    # trainset_paths = [f'data/train/{trainset}' for trainset in trainsets]
+    # valset_paths = [f'data/val/{valset}' for valset in valsets]
+    trainset_paths = [f'new_data/train/{trainset}' for trainset in trainsets]
+    valset_paths = [f'new_data/val/{valset}' for valset in valsets]
 
 
 

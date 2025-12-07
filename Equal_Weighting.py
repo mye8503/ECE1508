@@ -27,8 +27,10 @@ def get_action(current_day_idx, data, target_weight):
 if __name__ == "__main__":
     investment = 100000
     
-    testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
-    save_results_path = 'old_data_results/reward_simple_return/EQ_test_results'
+    # testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
+    testset_paths = sorted([os.path.join('new_data/test', f) for f in os.listdir('new_data/test') if not os.path.isfile(f)])
+    save_results_path = 'EQ_test_results'
+    os.makedirs(save_results_path, exist_ok=True)
 
     portfolio_vals_sets = []
     years = []
