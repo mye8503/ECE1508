@@ -8,15 +8,15 @@ import matplotlib.pyplot as plt
 from backtest_ppo import calculate_annual_sharpe_ratio
 
 
-ppo_daily_vals_sets = 'PPO_test_results/portfolio_vals.pkl'
+ppo_daily_vals_sets = 'old_data_results/reward_simple_return/PPO_test_results/portfolio_vals.pkl'
 ddpg_daily_vals_sets = 'DDPG_test_results/portfolio_vals.pkl'
 a2c_daily_vals_sets = 'A2C_test_results/portfolio_vals.pkl'
 acer_daily_vals_sets = 'ACER_test_results/portfolio_vals.pkl'
-EQ_daily_vals_sets = 'EQ_test_results/portfolio_vals.pkl'
-BH_daily_vals_sets = 'BH_test_results/portfolio_vals.pkl'
-MVO_daily_vals_sets = 'MVO_test_results/portfolio_vals.pkl'
+EQ_daily_vals_sets = 'old_data_results/reward_simple_return/EQ_test_results/portfolio_vals.pkl'
+BH_daily_vals_sets = 'old_data_results/reward_simple_return/BH_test_results/portfolio_vals.pkl'
+MVO_daily_vals_sets = 'old_data_results/reward_simple_return/MVO_test_results/portfolio_vals.pkl'
 
-comparison_graphs_path = 'comparison_graphs' # dir to save graphs
+comparison_graphs_path = 'old_data_results/reward_simple_return/comparison_graphs' # dir to save graphs
 os.makedirs(comparison_graphs_path, exist_ok=True)
 
 
@@ -32,9 +32,9 @@ def open_file(path):
 
 data_dict = {
     'ppo_val_sets':open_file(ppo_daily_vals_sets),
-    'ddpg_val_sets':open_file(ddpg_daily_vals_sets),
-    'a2c_val_sets':open_file(a2c_daily_vals_sets),
-    'acer_val_sets':open_file(acer_daily_vals_sets),
+    # 'ddpg_val_sets':open_file(ddpg_daily_vals_sets),
+    # 'a2c_val_sets':open_file(a2c_daily_vals_sets),
+    # 'acer_val_sets':open_file(acer_daily_vals_sets),
     'eq_val_sets':open_file(EQ_daily_vals_sets),
     'bh_val_sets':open_file(BH_daily_vals_sets),
     'mvo_val_sets':open_file(MVO_daily_vals_sets)

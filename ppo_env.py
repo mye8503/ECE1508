@@ -40,7 +40,10 @@ class StockTradingEnv(gym.Env):
                                                 shape=(self.num_companies, self.lookback_period), dtype=np.float32)
 
         # define what actions are available
-        self.action_space = gym.spaces.Box(low=-10, high=10, shape=(self.num_companies,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_companies,), dtype=np.float32)
+
+        # allow shorting
+        # self.action_space = gym.spaces.Box(low=-10, high=10, shape=(self.num_companies,), dtype=np.float32)
 
     
     def _get_obs(self):
@@ -92,8 +95,12 @@ class StockTradingEnv(gym.Env):
         # update date
         self.current_day_idx += 1
         
+
+        # ablation study: simple return as reward
+        reward = self._calculate_simple_return(new_weights=action)
+
         # calculate reward based on change in portfolio value
-        reward = self._calculate_diff_sharpe_ratio(new_weights=action)
+        # reward = self._calculate_diff_sharpe_ratio(new_weights=action)
 
         # check if episode is done
         done = self.current_day_idx >= len(self.data) -1 # account for indexing starting from 0
@@ -129,6 +136,24 @@ class StockTradingEnv(gym.Env):
 
         return shares
 
+    
+    def _calculate_simple_return(self, new_weights):
+        # calculating the reward, which is the simple return
+        # we are assuming that at the end of the trading day, we are able to reallocate our portfolio
+        today = self.data.index[self.current_day_idx] # t+1
+        yesterday = self.data.index[self.current_day_idx-1] # t
+
+        shares = self._calculate_shares(new_weights, yesterday) # share_t
+        new_prices = self.data['Close'][today:today].values.flatten() 
+
+        new_portfolio_val = np.dot(shares, new_prices) # p_(t+1)
+        old_portfolio_val = self.portfolio_val # p_t
+
+        reward = (new_portfolio_val - old_portfolio_val) / old_portfolio_val
+
+        self.portfolio_val = new_portfolio_val
+
+        return reward
 
 
     def _calculate_diff_sharpe_ratio(self, new_weights):

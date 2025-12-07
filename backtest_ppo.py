@@ -31,7 +31,7 @@ def test_model(model_path, testset_path,
     state, _ = env.reset()
 
     model = PPO.load(model_path, env)
-
+    print("Loaded model from:", model_path)
     portfolio_weights.append(env._portfolio_allocation)
 
     while not done:
@@ -250,6 +250,7 @@ if __name__=='__main__':
     years = []
 
     for i in range(len(testset_paths)):
+        print(i)
 
         file_name = testset_paths[i].split('/')[-1]
         year = file_name.split('.')[0]

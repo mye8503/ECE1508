@@ -137,7 +137,8 @@ class StockEnvMVO(StockTradingEnv):
         self.current_day_idx += 1
         
         # calculate reward based on change in portfolio value
-        reward = self._calculate_diff_sharpe_ratio(new_weights=action)
+        reward = self._calculate_simple_return(new_weights=action)
+        # reward = self._calculate_diff_sharpe_ratio(new_weights=action)
 
         # check if episode is done
         done = self.current_day_idx >= len(self.data) -1 # account for indexing starting from 0

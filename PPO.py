@@ -134,7 +134,7 @@ if __name__=='__main__':
 
     # number of agents to train indep
     # n_agents = 2
-    n_agents = 3
+    n_agents = 2
     seeds = [i*111 for i in range(1, n_agents+1)]
 
     best_seed = None 

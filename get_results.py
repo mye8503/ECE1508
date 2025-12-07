@@ -70,7 +70,7 @@ def get_metrics(data_dict):
 
 
 if __name__=='__main__':
-    path_to_save = 'metrics_table.csv'
+    path_to_save = 'simple_return_metrics_table.csv'
     
     metrics_dict = get_metrics(data_dict=data_dict)
 

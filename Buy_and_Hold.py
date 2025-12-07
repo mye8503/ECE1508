@@ -14,7 +14,7 @@ if __name__ == "__main__":
     investment = 100000
     
     testset_paths = sorted([os.path.join('data/test', f) for f in os.listdir('data/test') if not os.path.isfile(f)])
-    save_results_path = 'BH_test_results'
+    save_results_path = 'old_data_results/reward_simple_return/BH_test_results'
 
     portfolio_vals_sets = []
     years = []
