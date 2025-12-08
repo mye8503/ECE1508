@@ -1,0 +1,12 @@
+# the following packages are needed to run the code
+
+yfinance # retrieve datasets from Yahoo Finance
+pickle # dataset format
+numpy # numerical operations
+stable_baselines3 # PPO and DDPG models
+gym # environment setup
+pandas # data manipulation
+torch # deep learning framework
+matplotlib # data visualization
+requests # HTTP requests for S&P 500 companies
+scipy # math for MVO model

@@ -100,18 +100,19 @@ class DDPG_Agent():
         return mean_val_reward
 
         
-            
 
 
-
+### DATASET PATHS ###
 trainsets = sorted(os.listdir('data/train'))
 valsets = sorted(os.listdir('data/val'))
 
 trainset_paths = [f'data/train/{trainset}' for trainset in trainsets]
 valset_paths = [f'data/val/{valset}' for valset in valsets]
+#####################
 
 
-# model hyperparameters
+
+### AGENT HYPERPARAMETERS ###
 policy = 'MlpPolicy'
 initial_lr = 3e-4
 final_lr = 1e-5
@@ -156,10 +157,13 @@ eval_freq = 100_000 // n_env # used in evalcallback
 # eval_freq = 252*5 // n_env # used in evalcallback
 device = 'cpu'
 seeds = [i*111 for i in range(1, 3)]
+####################################
+
+
 
 best_seed = None
-
 best_models = []
+
 
 
 if __name__=='__main__':

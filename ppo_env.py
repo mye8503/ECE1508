@@ -40,10 +40,7 @@ class StockTradingEnv(gym.Env):
                                                 shape=(self.num_companies, self.lookback_period), dtype=np.float32)
 
         # define what actions are available
-        self.action_space = gym.spaces.Box(low=0, high=1, shape=(self.num_companies,), dtype=np.float32)
-
-        # allow shorting
-        # self.action_space = gym.spaces.Box(low=-10, high=10, shape=(self.num_companies,), dtype=np.float32)
+        self.action_space = gym.spaces.Box(low=-10, high=10, shape=(self.num_companies,), dtype=np.float32)
 
     
     def _get_obs(self):
