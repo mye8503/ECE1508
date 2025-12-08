@@ -1,9 +1,4 @@
----
-title: Final Project
-
----
-
-# ECE1508
+# ECE1508 Final Project
 
 ## Project Description
 In recent years, with the progress and development of deep neural networks and its integration with reinforcement learning (RL), there has been an ever growing interest in leveraging DRL in the field of finance, mainly for portfolio optimization. In this project, we investigate the performance of deep reinforcement learning (DRL) in the field of portfolio management. The efficacy of four different DRL models is measured by comparing the results obtained via DRL with the results obtained through three simple and non-RL heuristics and models.
