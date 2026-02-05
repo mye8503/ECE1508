@@ -3,7 +3,7 @@ import shutil
 
 from typing import Callable
 
-from ppo_env import StockTradingEnv
+from env import StockTradingEnv
 import numpy as np
 
 from stable_baselines3 import PPO

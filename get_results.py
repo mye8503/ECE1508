@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 from compare_results import data_dict, get_max_drawdown
-from backtest_ppo import calculate_annual_sharpe_ratio
+from PPO_backtest import calculate_annual_sharpe_ratio
 
 
 

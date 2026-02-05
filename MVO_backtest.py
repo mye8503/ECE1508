@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from MVO import StockEnvMVO, MVO
-from backtest_ppo import *
+from PPO_backtest import *
 
 
 

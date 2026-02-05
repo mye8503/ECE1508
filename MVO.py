@@ -1,4 +1,4 @@
-from ppo_env import StockTradingEnv
+from env import StockTradingEnv
 
 from scipy.optimize import minimize
 

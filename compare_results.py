@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from backtest_ppo import calculate_annual_sharpe_ratio
+from PPO_backtest import calculate_annual_sharpe_ratio
 
 
 ppo_daily_vals_sets = 'PPO_test_results/portfolio_vals.pkl'

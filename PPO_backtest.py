@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from ppo_env import StockTradingEnv
+from env import StockTradingEnv
 
 from stable_baselines3 import PPO
 
