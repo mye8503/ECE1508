@@ -19,20 +19,6 @@ On both datasets, the best model was PPO. The test results on the datasets are a
 
 For a more comprehensive look at our methodology, results, and discussion about the obtained results, checkout our [report](https://github.com/mye8503/ECE1508/blob/main/Final_Report.pdf).
 
-## Structure
-```
-ECE1508/
-├── a2c.py         # train and test A2C model
-├── acer.py      # train and test ACER model
-├── Buy_and_Hold.py      # train and test buy and hold heuristic
-├── compare_results.py      # get the relevant graphs and tables comparing each model
-├── ddpg.py      # train and test DDPG model
-├── env.py      # the environment used for our DRL models to interact with
-├── Equal_Weighing.py      # test Equal Weighing heuristic
-├── get_results.py      # get metrics table when using simple return as reward function
-├── icons/           # Icons used in game
-├── sound effects/   # Sound effects used in game
-```
 
 ## Setup
 Download all packages listed in **requirements.txt**.
