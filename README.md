@@ -1,8 +1,38 @@
 # ECE1508 Final Project
 
 ## Project Description
-In recent years, with the progress and development of deep neural networks and its integration with reinforcement learning (RL), there has been an ever growing interest in leveraging DRL in the field of finance, mainly for portfolio optimization. In this project, we investigate the performance of deep reinforcement learning (DRL) in the field of portfolio management. The efficacy of four different DRL models is measured by comparing the results obtained via DRL with the results obtained through three simple and non-RL heuristics and models.
+### Introduction
+In recent years, with the progress and development of deep neural networks and its integration with reinforcement learning (RL), there has been an ever growing interest in leveraging DRL in the field of finance, mainly for portfolio optimization. In this project, we investigate the performance of deep reinforcement learning (DRL) in the field of portfolio management. The efficacy of four different DRL models (PPO, DDPG, ACER, A2C) is measured by comparing the results obtained via DRL with the results obtained through three simple and non-RL heuristics and models (MVO, Buy and Hold, Equal Weighing).
 
+### Reward Scheme
+We used two reward functions to conduct an ablation study. The first function was part of our environment modification and maximized risk-adjusted returns by incorporating the **_Differential
+Sharpe Ratio_**. The second function calculated the portfolio’s simple return.
+
+You can change the reward function used by modifying the `step` function in the **env.py**.
+
+### Results
+We conducted our experiments on two different datasets, the first one containing 5 highly correlated (see [pearson correlation.csv](https://github.com/mye8503/ECE1508/blob/main/EDA/old%20data/pearson%20correlation.csv)) assets (MAANG: _Microsoft, Apple, Amazon, Nvidida, Google_), and the second one containing 33 assets (3 companies from each of the 11 GICS sectors of _S&P500_).
+
+On both datasets, the best model was PPO. The test results on the datasets are as follows (when using **_Differential Sharpe Ratio_**):
++ On the first dataset the model achieved an average of **35%** annual return and an average annual Sharpe Ratio of **1.7**.
++ On the second dataset the model achieved an average of **113%** annual return and an average annual Sharpe Ratio of **3.9**.
+
+For a more comprehensive look at our methodology, results, and discussion about the obtained results, checkout our [report](https://github.com/mye8503/ECE1508/blob/main/Final_Report.pdf).
+
+## Structure
+```
+ECE1508/
+├── a2c.py         # train and test A2C model
+├── acer.py      # train and test ACER model
+├── Buy_and_Hold.py      # train and test buy and hold heuristic
+├── compare_results.py      # get the relevant graphs and tables comparing each model
+├── ddpg.py      # train and test DDPG model
+├── env.py      # the environment used for our DRL models to interact with
+├── Equal_Weighing.py      # test Equal Weighing heuristic
+├── get_results.py      # get metrics table when using simple return as reward function
+├── icons/           # Icons used in game
+├── sound effects/   # Sound effects used in game
+```
 
 ## Setup
 Download all packages listed in **requirements.txt**.
@@ -22,11 +52,11 @@ To view the data we are inputting into our models, run the following in a Python
 This will print the Open, Close, High, Low, Volume, and Log return values for each company in the dataset, over the date range. To view specific aspects of the data, you can index into it (ex: `data['Open']`, `data['GOOG']`, `data['2021':'2024']`).
 
 ### Dataset
-There are two datasets in this GitHub. One (in **data/**) contains MAANG (Microsoft, Amazon, Apple, Nvidia, Google) assets from 2005-2025, and the other (in **new_data/**) contains 33 S&P 500 assets from 2005-2025 (for the full company list, see our paper). The data has already been partitioned into train/val/test folders. If you want to change the split or pull data from different dates, change the dates in **get_data.py** and run the file.
+There are two datasets in this GitHub. One (in `data/`) contains MAANG (Microsoft, Amazon, Apple, Nvidia, Google) assets from 2005-2025, and the other (in `new_data/`) contains 33 S&P 500 assets from 2005-2025 (for the full company list, see our paper). The data has already been partitioned into `train/val/test` folders. If you want to change the split or pull data from different dates, change the dates in **get_data.py** (in `data ingestion/`) and run the file.
 
 
 ### Environment
-We used the same environment over all four models and three baseline heuristics. It can be found in **ppo_env.py**. You can modify the environment as you wish. For example, if you want to change the reward function to differential Sharpe Ratio from simple return, comment out line 97 and uncomment line 100.
+We used the same environment over all four models and three baseline heuristics. It can be found in **env.py**. You can modify the environment as you wish. For example, if you want to change the reward function to differential Sharpe Ratio from simple return, comment out line 97 and uncomment line 100.
 
 
 ### Models
